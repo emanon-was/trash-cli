@@ -20,7 +20,6 @@ abspath ()
         fi
     done
     unset arg f p abs IFS;
-    return 0;
 }
 
 decode_utf8 ()
@@ -44,7 +43,7 @@ trash-put ()
     # values
     IFS=$'\n';
     trash=~/.local/share/Trash;
-    date=`date +"%Y-%m-%dT%T"`;
+    deldate=`date +"%Y-%m-%dT%T"`;
     files=(`abspath $@`);
     # mkdir ~/.local/share/Trash
     if [ -e $trash/files ];then mkdir -p $trash/files;fi
@@ -53,33 +52,35 @@ trash-put ()
     for fp in ${files[*]};do
         # rename
         rname=`basename $fp`;
-        if [ -f $fp ];then
-            declare -i fnum;
-            fname=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\1/"`;
-            fext=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\2/"`;
-            fnum=`find $trash/files -regex ".*\/$fname\(\.[0-9]*\)?$fext"|wc -l`+1;
-            if [ $fnum -gt 1 ];then
-                rname=$fname.$fnum$fext;
+        if [ -e $trash/files/$rname ] && [ -e $trash/info/$rname.trashinfo ];then
+            if [ -f $fp ];then
+                declare -i fnum;
+                fname=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\1/"`;
+                fext=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\2/"`;
+                fnum=`find $trash/files -regex ".*\/$fname\(\.[0-9]*\)?$fext"|wc -l`+1;
+                if [ $fnum -gt 1 ];then
+                    rname=$fname.$fnum$fext;
+                fi
+                unset fname fext fnum;
             fi
-            unset fname fext fnum;
-        fi
-        if [ -d $fp ];then
-            declare -i fnum;
-            fnum=`find $trash/files -regex ".*\/$rname\(\.[0-9]*\)?"|wc -l`+1;
-            if [ $fnum -gt 1 ];then
-                rname=$rname.$fnum;
+            if [ -d $fp ];then
+                declare -i fnum;
+                fnum=`find $trash/files -regex ".*\/$rname\(\.[0-9]*\)?"|wc -l`+1;
+                if [ $fnum -gt 1 ];then
+                    rname=$rname.$fnum;
+                fi
+                unset fnum;
             fi
-            unset fnum;
         fi
         # move file to Trash/files
-        mv $fp $trash/files/$rname;
-        # create trashinfo
-        trashinfo=$trash/info/$rname.trashinfo
-        echo "[Trash Info]"        > $trashinfo
-        echo "Path=$fp"           >> $trashinfo
-        echo "DeletionDate=$date" >> $trashinfo
+        # and create trashinfo
+        mv $fp $trash/files/$rname\
+        && trashinfo=$trash/info/$rname.trashinfo\
+        && echo "[Trash Info]"          >  $trashinfo\
+        && echo "Path=$fp"              >> $trashinfo\
+        && echo "DeletionDate=$deldate" >> $trashinfo;
     done
-    unset IFS trash date files fp rname trashinfo;
+    unset IFS trash deldate files fp rname trashinfo;
 }
 
 trash-list ()
@@ -93,13 +94,12 @@ trash-list ()
     if [ -e $trash/files ] && [ -e $trash/info ];then
         info=(`find $trash/info -name '*.trashinfo'`);
         if [ ${#info[*]} -ne 0 ];then
-            out="`cat ${info[*]}\
-                  | grep -v '\[Trash Info\]'\
-                  | sed  -e '/Path=/{;N;s/Path=\(.*\)\nDeletionDate=\(.*\)T\(.*\)/\2 \3 \1/g;}'`";
+            out="`cat ${info[*]} | grep -v '\[Trash Info\]'\
+                | sed  -e '/Path=/{;N;s/Path=\(.*\)\nDeletionDate=\(.*\)T\(.*\)/\2 \3 \1/g;}'`";
             decode_utf8 $out | sort $@;
         fi
     fi
-    unset trash out info IFS;
+    unset IFS trash out info;
 }
 
 trash-empty ()
@@ -108,32 +108,30 @@ trash-empty ()
     IFS=$'\n';
     trash=~/.local/share/Trash;
     declare -i ago;ago=$1;
-    insert=`date +"%Y-%m-%d %T" -d "$ago days ago"`
-    date=`date +"%Y%m%d%H%M%H" -d "$ago days ago"`;
+    insert=`date +"%Y-%m-%d %T" -d "$ago days ago"`;
+    deldate=`date +"%Y%m%d%H%M%S" -d "$ago days ago"`;
 
     # message
-    echo -e "`trash-list`\n$insert"\
-    | sort\
-    | grep "^$insert$" -B 10000 | grep -v "^$insert$";
+    echo -ne "`trash-list`\n$insert"\
+    | sort | grep "^$insert$" -B 10000 | grep -v "^$insert$" | sed '/^$/d';
     echo -n "Delete these files really? [y/n] ";
     read ans;
 
     # delete
-    if [ $ans = 'y' ] || [ $ans = 'yes' ];then
+    if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
         info=(`find $trash/info -name '*.trashinfo'`);
         rm=(-rf);
         for i in ${info[*]};do
-            file=`basename $i|sed -e "s/\.trashinfo//"`;
+            file=`basename $i|sed -e "s/[.]trashinfo//"`;
             file=$trash/files/$file;
             if [ -e $file ];then
                 t=`sed -n "/DeletionDate=.*/p" $i | sed -e "s/DeletionDate=//;s/-//g;s/T//g;s/\://g;"`;
-                if [ $date -gt $t ];then
+                if [ $deldate -gt $t ];then
                     rm=(${rm[*]} $i $file);
                 fi
             fi
         done
         rm ${rm[*]};
     fi
-    unset IFS trash ago insert date ans info i file t rm;
+    unset IFS trash ago insert deldate ans info i file t rm;
 }
-
