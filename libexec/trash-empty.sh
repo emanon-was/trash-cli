@@ -14,34 +14,36 @@
 # -------------------------
 
 # values
-IFS=$'\n';
+_IFS="$IFS";IFS=$'\n';
 trash=~/.local/share/Trash;
 declare -i ago;ago=$1;
-insert=`date +"%Y-%m-%d %T" -d "$ago days ago"`;
-deldate=`date +"%Y%m%d%H%M%S" -d "$ago days ago"`;
+insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
+deldate=`\date +"%Y%m%d%H%M%S" -d "$ago days ago";`;
 
 # message
-out=(`echo -e "\`trash-list\`\n$insert" | sort | grep "^$insert$" -B 10000 | sed "/^$/d;/^$insert$/d;"`);
+out=(`\echo -e "\`trash-list\`\n$insert"|\sort|\grep "^$insert$" -B 10000|\sed "/^$/d;/^$insert$/d;"`);
 num=${#out[*]};
 if [ $num -ne 0 ];then echo -e "${out[*]}";fi
-echo -n "Delete these $num files really? [y/n] ";
-read ans;
+\echo -n "Delete these $num files really? [y/n] ";
+\read ans;
 
 # delete
 if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
-    info=(`ls $trash/info | grep "\.trashinfo$"`);
+    info=(`\ls $trash/info|\grep "\.trashinfo$";`);
     rm=(-rf);
     for i in ${info[*]};do
-        file=`echo $i|sed -e "s/\.trashinfo//"`;
+        file=`\echo $i|\sed -e "s/\.trashinfo//";`;
         i=$trash/info/$i;
         file=$trash/files/$file;
         if [ -e $file ];then
-            t=`sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1\2/;s/-//g;s/\://gp' $i`;
+            t=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1\2/;s/-//g;s/\://gp' $i;`;
             if [ $deldate -gt $t ];then
-                rm=(${rm[*]} $i $file);
+                rm=(${rm[@]} $i $file);
             fi
         fi
     done
-    rm ${rm[*]};
+    \rm ${rm[@]};
 fi
-unset IFS trash ago insert deldate ans info i file t rm;
+IFS=$_IFS;
+unset _IFS trash ago insert deldate ans info i file t rm;
+

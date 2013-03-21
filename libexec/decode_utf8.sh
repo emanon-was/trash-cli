@@ -6,13 +6,11 @@
 # > テスト
 # -------------------------
 
-IFS=$'\n'
+_IFS="$IFS";IFS=$'\n';
 for out in $@;do
-    out=`echo -e $out | sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g"`;
-    echo -e "$out";
+    out=`\echo $out|\sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g";`;
+    \echo $out;
 done
-unset out IFS;
-
-
-
+IFS=$_IFS;
+unset out _IFS;
 
