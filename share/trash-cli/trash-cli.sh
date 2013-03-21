@@ -74,11 +74,11 @@ trash-list ()
     _IFS="$IFS";IFS=$'\n';
     trash=~/.local/share/Trash;
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-        return 1;
+        IFS=$_IFS;unset _IFS trash;return;
     fi
     info=(`\ls $trash/info|\grep "\.trashinfo$"`);
     if [ ${#info[*]} -eq 0 ];then
-        return 0;
+        IFS=$_IFS;unset _IFS trash info;return;
     fi
     declare -a out;
     for i in ${info[*]};do
@@ -142,11 +142,11 @@ trash-restore ()
     _IFS="$IFS";IFS=$'\n';
     trash=~/.local/share/Trash;
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-        return 1;
+        IFS=$_IFS;unset trash _IFS;return;
     fi
     info=(`\ls $trash/info|\grep "\.trashinfo$"`);
     if [ ${#info[*]} -eq 0 ];then
-        return 0;
+        IFS=$_IFS;unset trash _IFS info;return;
     fi
 
     # create prototype
