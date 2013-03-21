@@ -41,9 +41,9 @@ out=(`\echo -e "${out[*]}"|\sort|\awk '{printf("%3s %s\n",NR,$0)}';`);
 
 # processing
 for a in ${ans[@]};do
-    f=`\echo -e "${out[*]}"|\sed -n "s/^ *$a *[^ ]* *[^ ]* *\(.*\)/\1/p";`;
-    tf=`\echo -e $f|\sed -e "s/'\(.*\)' '\(.*\)'/\1/";`;
-    rf=`\echo -e $f|\sed -e "s/'\(.*\)' '\(.*\)'/\2/";`;
+    f=`\echo -e "${out[*]}"|\sed -n "s/^\ *$a\ \+.*\('.*'\)\ \+\('.*'\)/\1 \2/p"`;
+    tf=`\echo -e $f|\sed -e "s/'\(.*\)'\ \+'\(.*\)'/\1/;s/ /\ /";`;
+    rf=`\echo -e $f|\sed -e "s/'\(.*\)'\ \+'\(.*\)'/\2/;s/ /\ /";`;
     if [ -e $rf ];then
         dname=`\dirname $rf;`;
         rname=`\basename $rf;`;
