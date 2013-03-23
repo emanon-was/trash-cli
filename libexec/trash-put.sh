@@ -21,7 +21,7 @@ for abs in ${files[@]};do
         if [ -f $abs ];then
             fname=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\1/";`;
             fext=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\2/";`;
-            fnum=(`ls $trash/files|grep "^$fname\(\.[0-9]*\)\?$fext$";`);
+            fnum=(`ls -a $trash/files|grep "^$fname\(\.[0-9]*\)\?$fext$";`);
             fnum=`expr ${#fnum[@]} + 1;`;
             if [ $fnum -gt 1 ];then
                 rname=$fname.$fnum$fext;
@@ -29,7 +29,7 @@ for abs in ${files[@]};do
             unset fname fext fnum;
         fi
         if [ -d $abs ];then
-            fnum=(`ls $trash/files|grep "^$rname\(\.[0-9]*\)\?$";`);
+            fnum=(`ls -a $trash/files|grep "^$rname\(\.[0-9]*\)\?$";`);
             fnum=`expr ${#fnum[@]} + 1;`;
             if [ $fnum -gt 1 ];then
                 rname=$rname.$fnum;

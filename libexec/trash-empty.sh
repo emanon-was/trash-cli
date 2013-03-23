@@ -30,7 +30,7 @@ read ans;
 
 # delete
 if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
-    info=(`ls $trash/info|grep "\.trashinfo$";`);
+    info=(`ls -a $trash/info|grep "\.trashinfo$";`);
     rm=(-rf);
     for i in ${info[@]};do
         f=$trash/files/`echo -e $i|sed -e 's/\.trashinfo$//';`;

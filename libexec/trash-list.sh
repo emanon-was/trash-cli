@@ -20,7 +20,7 @@ trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
     IFS=$_IFS;unset _IFS trash;exit;
 fi
-info=(`ls $trash/info|grep "\.trashinfo$"`);
+info=(`ls -a $trash/info|grep "\.trashinfo$"`);
 if [ ${#info[@]} -eq 0 ];then
     IFS=$_IFS;unset _IFS trash info;exit;
 fi

@@ -16,7 +16,7 @@ trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
     IFS="$_IFS";unset trash _IFS;exit;
 fi
-info=(`ls $trash/info|grep "\.trashinfo$"`);
+info=(`ls -a $trash/info|grep "\.trashinfo$"`);
 if [ ${#info[@]} -eq 0 ];then
     IFS="$_IFS";unset trash _IFS info;exit;
 fi
@@ -50,7 +50,7 @@ for a in ${ans[@]};do
         if [ -f $rf ];then
             fname=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\1/";`;
             fext=`echo $rname|sed -e "s/\([^.]*\)\(.*\)/\2/";`;
-            fnum=(`ls $dname|grep "^$fname\(\.[0-9]*\)\?$fext$";`);
+            fnum=(`ls -a $dname|grep "^$fname\(\.[0-9]*\)\?$fext$";`);
             fnum=`expr ${#fnum[@]} + 1;`;
             if [ $fnum -gt 1 ];then
                 rname=$fname.$fnum$fext;
@@ -58,7 +58,7 @@ for a in ${ans[@]};do
             unset fname fext fnum;
         fi
         if [ -d $rf ];then
-            fnum=(`ls $dname|grep "^$rname\(\.[0-9]*\)\?$";`);
+            fnum=(`ls -a $dname|grep "^$rname\(\.[0-9]*\)\?$";`);
             fnum=`expr ${#fnum[*]} + 1;`;
             if [ $fnum -gt 1 ];then
                 rname=$rname.$fnum;

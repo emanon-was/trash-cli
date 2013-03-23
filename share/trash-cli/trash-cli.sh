@@ -46,7 +46,7 @@ trash-empty ()
 
     # delete
     if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
-        info=(`\ls $trash/info | \grep "\.trashinfo$";`);
+        info=(`\ls -a $trash/info | \grep "\.trashinfo$";`);
         rm=(-rf);
         for i in ${info[@]};do
             f=$trash/files/`\echo -e $i | \sed -e 's/\.trashinfo$//';`;
@@ -72,7 +72,7 @@ trash-list ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS=$_IFS;unset _IFS trash;return;
     fi
-    info=(`\ls $trash/info | \grep "\.trashinfo$"`);
+    info=(`\ls -a $trash/info | \grep "\.trashinfo$"`);
     if [ ${#info[@]} -eq 0 ];then
         IFS=$_IFS;unset _IFS trash info;return;
     fi
@@ -104,7 +104,7 @@ trash-put ()
             if [ -f $abs ];then
                 fname=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
                 fext=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
-                fnum=(`\ls $trash/files|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
+                fnum=(`\ls -a $trash/files|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
                 fnum=`\expr ${#fnum[@]} + 1;`;
                 if [ $fnum -gt 1 ];then
                     rname=$fname.$fnum$fext;
@@ -112,7 +112,7 @@ trash-put ()
                 unset fname fext fnum;
             fi
             if [ -d $abs ];then
-                fnum=(`\ls $trash/files|\grep "^$rname\(\.[0-9]*\)\?$";`);
+                fnum=(`\ls -a $trash/files|\grep "^$rname\(\.[0-9]*\)\?$";`);
                 fnum=`\expr ${#fnum[@]} + 1;`;
                 if [ $fnum -gt 1 ];then
                     rname=$rname.$fnum;
@@ -140,7 +140,7 @@ trash-restore ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";unset trash _IFS;return;
     fi
-    info=(`\ls $trash/info | \grep "\.trashinfo$"`);
+    info=(`\ls -a $trash/info | \grep "\.trashinfo$"`);
     if [ ${#info[@]} -eq 0 ];then
         IFS="$_IFS";unset trash _IFS info;return;
     fi
@@ -174,7 +174,7 @@ trash-restore ()
             if [ -f $rf ];then
                 fname=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
                 fext=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
-                fnum=(`\ls $dname|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
+                fnum=(`\ls -a $dname|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
                 fnum=`\expr ${#fnum[@]} + 1;`;
                 if [ $fnum -gt 1 ];then
                     rname=$fname.$fnum$fext;
@@ -182,7 +182,7 @@ trash-restore ()
                 unset fname fext fnum;
             fi
             if [ -d $rf ];then
-                fnum=(`\ls $dname|\grep "^$rname\(\.[0-9]*\)\?$";`);
+                fnum=(`\ls -a $dname|\grep "^$rname\(\.[0-9]*\)\?$";`);
                 fnum=`\expr ${#fnum[*]} + 1;`;
                 if [ $fnum -gt 1 ];then
                     rname=$rname.$fnum;
