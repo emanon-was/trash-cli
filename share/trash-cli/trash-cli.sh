@@ -1,200 +1,270 @@
+# -------------------------
+# $ abspath .
+# > /home/emanon
+# -------------------------
 abspath ()
 {
     _IFS="$IFS";IFS=$'\n';
     for arg in $@;do
-        # file
         if [ -f $arg ];then
-            f=`\basename $arg;`;
-            p=`\dirname $arg;`;p=`\cd $p;\pwd;`;
-            \echo -e $p/$f;
+            b=`\basename $arg;`;
+            d=`\dirname $arg;`;d=`\cd $d;\pwd;`;
+            \echo -e $d/$b;
         fi
-        # directory
         if [ -d $arg ];then
             \echo -e `\cd $arg;\pwd;`;
         fi
     done
+    unset arg b d;
     IFS="$_IFS";
-    unset _IFS arg f p;
+    unset _IFS;
 }
-
+# -------------------------
+# $ decode_utf8 %E3%83%86%E3%82%B9%E3%83%88
+# > テスト
+# -------------------------
 decode_utf8 ()
 {
     _IFS="$IFS";IFS=$'\n';
     for stdout in $@;do
-        \echo -e "`\echo -e $stdout | \sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g";`";
+        stdout=`\echo -e $stdout|\sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g";`;
+        \echo -e $stdout;
     done
     IFS="$_IFS";
     unset _IFS stdout;
 }
-
+# -------------------------
+# $ trash-list
+# > 2013-03-11 08:37:49 /home/emanon/test1.txt
+# > 2013-03-12 08:37:49 /home/emanon/test2.txt
+# > 2013-03-15 08:37:49 /home/emanon/test3.txt
+# > 2013-03-21 08:37:49 /home/emanon/test4.txt
+# $ trash-empty 7
+# > 2013-03-11 08:37:49 /home/emanon/test1.txt
+# > 2013-03-12 08:37:49 /home/emanon/test2.txt
+# > Delete these 2 files really? [y/n] y
+# -------------------------
 trash-empty ()
 {
-    # values
+    # step1
     _IFS="$IFS";IFS=$'\n';
     trash=~/.local/share/Trash;
+    if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
+        IFS="$_IFS";
+        unset trash _IFS;
+        exit;
+    fi
     declare -i ago;ago=$1;
     insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
-    deldate=`\date +"%Y%m%d%H%M%S" -d "$ago days ago";`;
+    unset ago;
 
-    # message
-    stdout="`trash-list`\n$insert"
-    stdout=(`\echo -en "${stdout[*]}" | \sort | \grep "^$insert$" -B 10000 | \sed "/^$/d;/^$insert$/d;"`);
-    num=${#stdout[@]};
-    if [ $num -ne 0 ];then echo -e "${stdout[*]}";fi
-    \echo -n "Delete these $num files really? [y/n] ";
-    \read ans;
-
-    # delete
-    if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
-        info=(`\ls -a $trash/info | \grep "\.trashinfo$";`);
-        rm=(-rf);
-        for i in ${info[@]};do
-            f=$trash/files/`\echo -e $i | \sed -e 's/\.trashinfo$//';`;
-            i=$trash/info/$i;
-            if [ -L $f ] || [ -e $f ];then
-                t=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1\2/;s/-//g;s/\://gp' $i;`;
-                if [ $deldate -gt $t ];then
-                    rm=(${rm[@]} $i $f);
-                fi
-            fi
-        done
-        \rm ${rm[@]};
-    fi
-    IFS="$_IFS";
-    unset _IFS trash ago insert deldate ans info i f t rm;
-}
-
-trash-list ()
-{
-    # values
-    _IFS="$IFS";IFS=$'\n';
-    trash=~/.local/share/Trash;
-    if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-        IFS=$_IFS;unset _IFS trash;return;
-    fi
-    info=(`\ls -a $trash/info | \grep "\.trashinfo$"`);
-    if [ ${#info[@]} -eq 0 ];then
-        IFS=$_IFS;unset _IFS trash info;return;
-    fi
-    declare -a stdout;
-    for i in ${info[@]};do
-        i=$trash/info/$i;
-        stdout=(${stdout[@]} "`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i` `\sed -n 's/Path=\(.*\)/\1/p' $i`");
-    done
-    \decode_utf8 "${stdout[*]}" | \sort $@;
-    IFS="$_IFS";
-    unset _IFS trash stdout info;
-}
-
-trash-put ()
-{
-    # values
-    _IFS="$IFS";IFS=$'\n';
-    trash=~/.local/share/Trash;
-    deldate=`\date +"%Y-%m-%dT%T";`;
-    files=(`\abspath $@;`);
-    # mkdir ~/.local/share/Trash
-    if [ ! -e $trash/files ];then mkdir -p $trash/files;fi
-    if [ ! -e $trash/info ] ;then mkdir -p $trash/info ;fi
-    # processing
-    for abs in ${files[@]};do
-        # rename
-        rname=`\basename $abs;`;
-        if [ -e $trash/files/$rname ] && [ -e $trash/info/$rname.trashinfo ];then
-            if [ -f $abs ];then
-                fname=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
-                fext=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
-                fnum=(`\ls -a $trash/files|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
-                fnum=`\expr ${#fnum[@]} + 1;`;
-                if [ $fnum -gt 1 ];then
-                    rname=$fname.$fnum$fext;
-                fi
-                unset fname fext fnum;
-            fi
-            if [ -d $abs ];then
-                fnum=(`\ls -a $trash/files|\grep "^$rname\(\.[0-9]*\)\?$";`);
-                fnum=`\expr ${#fnum[@]} + 1;`;
-                if [ $fnum -gt 1 ];then
-                    rname=$rname.$fnum;
-                fi
-                unset fnum;
-            fi
-        fi
-        # move file to Trash/files
-        # and create trashinfo
-        \mv $abs $trash/files/$rname\
-        && trashinfo=$trash/info/$rname.trashinfo\
-        && \echo "[Trash Info]"          >  $trashinfo\
-        && \echo "Path=$abs"              >> $trashinfo\
-        && \echo "DeletionDate=$deldate" >> $trashinfo;
-    done
-    IFS="$_IFS";
-    unset _IFS trash deldate files abs rname trashinfo;
-}
-
-trash-restore ()
-{
-    # values
-    _IFS="$IFS";IFS=$'\n';
-    trash=~/.local/share/Trash;
-    if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-        IFS="$_IFS";unset trash _IFS;return;
-    fi
-    info=(`\ls -a $trash/info | \grep "\.trashinfo$"`);
-    if [ ${#info[@]} -eq 0 ];then
-        IFS="$_IFS";unset trash _IFS info;return;
-    fi
-
-    # create prototype
+    # step2
     declare stdout;
+    info=(`\ls -a $trash/info|\grep "\.trashinfo$"`);
     for i in ${info[@]};do
         f=$trash/files/`\echo -e $i|\sed -e 's/\.trashinfo$//';`;
         i=$trash/info/$i;
-        deldate=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i;`;
+        d=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i;`;
         p=`\sed -n 's/Path=\(.*\)/\1/p' $i;`;
-        stdout=(${stdout[@]} "$deldate '$f' '$p'");
+        declare s;
+        if [ -d $f ];then s=/;fi
+        if [ -L $f ];then s=@;fi
+        stdout=(${stdout[@]} "$d '$p' '$s' '$f' '$i'");
+        unset s;
     done
-    unset deldate p i f;
+    unset info d p i f;
+    stdout=(${stdout[@]} "$insert");
     stdout=(`\decode_utf8 "${stdout[*]}";`);
-    stdout=(`\echo -e "${stdout[*]}"| \sort | \awk '{printf("%3s %s\n",NR,$0)}';`);
+    stdout=(`\echo -en "${stdout[*]}"|\sort|\grep "^$insert$" -B 10000|\sed "/^$/d;/^$insert$/d;"`);
+    unset insert;
 
-    # message
-    \echo -e "${stdout[*]}" | \sed -e "s/'\(.*\)' '\(.*\)'/\2/;s/'//g;";
-    \echo -en "What file to restore [1..${#info[@]}]: ";
-    \read ans;ans=(`\echo $ans|\sed -e 's/[^0-9]/\n/g;s/^$//g';`);
+    # step3
+    disp=(`\echo -en "${stdout[*]}"|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\1 \2\3/g;"`);
+    num=${#disp[@]};
+    if [ $num -ne 0 ];then \echo -e "${disp[*]}";fi
+    \echo -n "Delete these $num files really? [y/n] ";
+    read ans;
 
-    # processing
+    # step4
+    if [ "$ans" != 'y' ] && [ "$ans" != 'yes' ];then
+        IFS="$_IFS";
+        unset _IFS trash disp num ans;
+        exit;
+    fi
+    rm=(-rf);
+    for l in ${stdout[@]};do
+        f=`\echo -en $l|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\4/g;"`;
+        i=`\echo -en $l|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\5/g;"`;
+        if [ -L $f ] || [ -e $f ];then
+            rm=(${rm[@]} $i $f);
+        fi
+    done
+    unset l f i;
+    \rm ${rm[@]};
+    IFS="$_IFS";
+    unset _IFS trash disp num ans rm;
+}
+# -------------------------
+# $ trash-list
+# > 2013-03-11 08:37:49 /home/emanon/test1.txt
+# > 2013-03-12 08:37:49 /home/emanon/test2.txt
+# > 2013-03-15 08:37:49 /home/emanon/test3.txt
+# > 2013-03-21 08:37:49 /home/emanon/test4.txt
+# $ trash-list -r (sort command options)
+# > 2013-03-21 08:37:49 /home/emanon/test4.txt
+# > 2013-03-15 08:37:49 /home/emanon/test3.txt
+# > 2013-03-12 08:37:49 /home/emanon/test2.txt
+# > 2013-03-11 08:37:49 /home/emanon/test1.txt
+# -------------------------
+trash-list ()
+{
+    # step1
+    _IFS="$IFS";IFS=$'\n';
+    trash=~/.local/share/Trash;
+    if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
+        IFS="$_IFS";
+        unset _IFS trash;
+        exit;
+    fi
+
+    # step2
+    declare stdout;
+    info=(`\ls -a $trash/info|\grep "\.trashinfo$"`);
+    for i in ${info[@]};do
+        f=$trash/files/`\echo -e $i|\sed -e 's/\.trashinfo$//';`;
+        i=$trash/info/$i;
+        d=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i`
+        p=`\sed -n 's/Path=\(.*\)/\1/p' $i`
+        declare s;
+        if [ -d $f ];then s=/;fi
+        if [ -L $f ];then s=@;fi
+        stdout=(${stdout[@]} "$d $p$s");
+        unset s;
+    done
+    unset info i d p;
+
+    # step3
+    \decode_utf8 "${stdout[*]}" | \sort $@;
+    IFS="$_IFS";
+    unset _IFS trash stdout;
+}
+# -------------------------
+# $ trash-put test1.txt test2.txt test3.txt test4.txt
+# -------------------------
+trash-put ()
+{
+    # step1
+    _IFS="$IFS";IFS=$'\n';
+    trash=~/.local/share/Trash;
+    date=`\date +"%Y-%m-%dT%T";`;
+    files=`\abspath $@;`;
+
+    # step2
+    if [ ! -d $trash/files ];then \mkdir -p $trash/files;fi
+    if [ ! -d $trash/info ] ;then \mkdir -p $trash/info ;fi
+
+    # step3
+    for f in ${files[@]};do
+        bname=`\basename $f;`;
+        if [ -e $trash/files/$bname ] && [ -e $trash/info/$bname.trashinfo ];then
+            if [ -f $f ];then
+                fname=`\echo -en $bname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
+                fext=`\echo -en $bname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
+                fnum=(`\ls -a $trash/files|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
+                fnum=`\expr ${#fnum[@]} + 1;`;
+                if [ $fnum -gt 1 ];then bname=$fname.$fnum$fext;fi
+                unset fname fext fnum;
+            fi
+            if [ -d $f ];then
+                fnum=(`\ls -a $trash/files|\grep "^$bname\(\.[0-9]*\)\?$";`);
+                fnum=`\expr ${#fnum[@]} + 1;`;
+                if [ $fnum -gt 1 ];then bname=$bname.$fnum;fi
+                unset fnum;
+            fi
+        fi
+        \mv $f $trash/files/$bname\
+    && trashinfo=$trash/info/$bname.trashinfo\
+    && \echo "[Trash Info]"       >  $trashinfo\
+    && \echo "Path=$f"            >> $trashinfo\
+    && \echo "DeletionDate=$date" >> $trashinfo;
+    done
+    unset f trashinfo;
+    IFS="$_IFS";
+    unset _IFS trash date files bname;
+}
+# -------------------------
+# $ trash-restore
+# >   1 2013-03-11 08:37:49 /home/emanon/test1.txt
+# >   2 2013-03-12 08:37:49 /home/emanon/test2.txt
+# >   3 2013-03-15 08:37:49 /home/emanon/test3.txt
+# >   4 2013-03-21 08:37:49 /home/emanon/test4.txt
+# > What file to restore [1..4]: 1 3
+# -------------------------
+trash-restore ()
+{
+    # step1
+    _IFS="$IFS";IFS=$'\n';
+    trash=~/.local/share/Trash;
+    if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
+        IFS="$_IFS";
+        unset _IFS trash;
+        exit;
+    fi
+
+    # step2
+    declare stdout;
+    info=(`\ls -a $trash/info|\grep "\.trashinfo$"`);
+    for i in ${info[@]};do
+        f=$trash/files/`\echo -e $i|\sed -e 's/\.trashinfo$//';`;
+        i=$trash/info/$i;
+        p=`\sed -n 's/Path=\(.*\)/\1/p' $i;`;
+        d=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i;`;
+        declare s;
+        if [ -d $f ];then s=/;fi
+        if [ -L $f ];then s=@;fi
+        stdout=(${stdout[@]} "$d '$p' '$s' '$f' '$i'");
+        unset s;
+    done
+    unset d p f i info;
+    stdout=(`\decode_utf8 "${stdout[*]}";`);
+    stdout=(`\echo -en "${stdout[*]}"|\sort|\awk '{printf("%3s %s\n",NR,$0)}';`);
+
+    # step3
+    if [ ${#stdout[@]} -ne 0 ];then
+        \echo -e "${stdout[*]}"| \sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\1 \2\3/;";
+        \echo -en "What file to restore [1..${#stdout[@]}]: ";
+        read ans;ans=(`\echo $ans|\sed -e 's/[^0-9]/\n/g;s/^$//g';`);
+    fi
+
+    # step4
     for a in ${ans[@]};do
-        f=`\echo -e "${stdout[*]}"|\sed -n "s/^\ *$a\ \+.*\('.*'\)\ \+\('.*'\)/\1 \2/p"`;
-        tf=`\echo -e $f|\sed -e "s/'\(.*\)'\ \+'\(.*\)'/\1/;s/ /\ /";`;
-        rf=`\echo -e $f|\sed -e "s/'\(.*\)'\ \+'\(.*\)'/\2/;s/ /\ /";`;
+        f=`\echo -e "${stdout[*]}"|\sed -n "/^\ *$a\ /p"`;
+        tf=`\echo -e $f|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\4/;";`;
+        if=`\echo -e $f|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\5/;";`;
+        rf=`\echo -e $f|\sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\2/;";`;
         if [ -e $rf ];then
             dname=`\dirname $rf;`;
-            rname=`\basename $rf;`;
+            bname=`\basename $rf;`;
             if [ -f $rf ];then
-                fname=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
-                fext=`\echo $rname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
+                fname=`\echo $bname|\sed -e "s/\([^.]*\)\(.*\)/\1/";`;
+                fext=`\echo $bname|\sed -e "s/\([^.]*\)\(.*\)/\2/";`;
                 fnum=(`\ls -a $dname|\grep "^$fname\(\.[0-9]*\)\?$fext$";`);
                 fnum=`\expr ${#fnum[@]} + 1;`;
-                if [ $fnum -gt 1 ];then
-                    rname=$fname.$fnum$fext;
-                fi
+                if [ $fnum -gt 1 ];then bname=$fname.$fnum$fext;fi
                 unset fname fext fnum;
             fi
             if [ -d $rf ];then
-                fnum=(`\ls -a $dname|\grep "^$rname\(\.[0-9]*\)\?$";`);
+                fnum=(`\ls -a $dname|\grep "^$bname\(\.[0-9]*\)\?$";`);
                 fnum=`\expr ${#fnum[*]} + 1;`;
-                if [ $fnum -gt 1 ];then
-                    rname=$rname.$fnum;
-                fi
+                if [ $fnum -gt 1 ];then bname=$bname.$fnum;fi
                 unset fnum;
             fi
-            rf=$dname/$rname;
-            unset rname dname;
+            rf=$dname/$bname;
+            unset bname dname;
         fi
-        \mv $tf $rf && \rm $trash/info/`\basename $tf;`.trashinfo;
+        \mv $tf $rf && \rm $if;
     done
+    unset ans a f tf if rf;
     IFS="$_IFS";
-    unset _IFS trash stdout info a f tf rf;
+    unset _IFS trash stdout;
 }
-
