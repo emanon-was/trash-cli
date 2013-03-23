@@ -18,18 +18,17 @@
 _IFS="$IFS";IFS=$'\n';
 trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-    IFS=$_IFS;unset _IFS trash;exit;
+    IFS=$_IFS;unset _IFS trash;return;
 fi
-info=(`\ls $trash/info|\grep "\.trashinfo$"`);
-if [ ${#info[*]} -eq 0 ];then
-    IFS=$_IFS;unset _IFS trash info;exit;
+info=(`ls $trash/info|grep "\.trashinfo$"`);
+if [ ${#info[@]} -eq 0 ];then
+    IFS=$_IFS;unset _IFS trash info;return;
 fi
-declare -a out;
-for i in ${info[*]};do
+declare -a stdout;
+for i in ${info[@]};do
     i=$trash/info/$i;
-    out=(${out[*]} "`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i` `\sed -n 's/Path=\(.*\)/\1/p' $i`");
+    stdout=(${stdout[@]} "`sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i` `sed -n 's/Path=\(.*\)/\1/p' $i`");
 done
-\decode_utf8 ${out[*]} | \sort $@;
-IFS=$_IFS;
-unset _IFS trash out info;
-
+decode_utf8 "${stdout[*]}" | sort $@;
+IFS="$_IFS";
+unset _IFS trash stdout info;

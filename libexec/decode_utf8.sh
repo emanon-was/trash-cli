@@ -7,10 +7,9 @@
 # -------------------------
 
 _IFS="$IFS";IFS=$'\n';
-for out in $@;do
-    out=`\echo $out|\sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g";`;
-    \echo $out;
+for stdout in $@;do
+    echo -e "`echo -e $stdout|sed -e "s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\\\\x\1/g";`";
 done
-IFS=$_IFS;
-unset out _IFS;
+IFS="$_IFS";
+unset _IFS stdout;
 
