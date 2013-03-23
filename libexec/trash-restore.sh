@@ -14,11 +14,11 @@
 _IFS="$IFS";IFS=$'\n';
 trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-    IFS="$_IFS";unset trash _IFS;return;
+    IFS="$_IFS";unset trash _IFS;exit;
 fi
 info=(`ls $trash/info|grep "\.trashinfo$"`);
 if [ ${#info[@]} -eq 0 ];then
-    IFS="$_IFS";unset trash _IFS info;return;
+    IFS="$_IFS";unset trash _IFS info;exit;
 fi
 
 # create prototype

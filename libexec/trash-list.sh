@@ -18,11 +18,11 @@
 _IFS="$IFS";IFS=$'\n';
 trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
-    IFS=$_IFS;unset _IFS trash;return;
+    IFS=$_IFS;unset _IFS trash;exit;
 fi
 info=(`ls $trash/info|grep "\.trashinfo$"`);
 if [ ${#info[@]} -eq 0 ];then
-    IFS=$_IFS;unset _IFS trash info;return;
+    IFS=$_IFS;unset _IFS trash info;exit;
 fi
 declare -a stdout;
 for i in ${info[@]};do

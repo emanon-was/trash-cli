@@ -35,7 +35,7 @@ if [ "$ans" = 'y' ] || [ "$ans" = 'yes' ];then
     for i in ${info[@]};do
         f=$trash/files/`echo -e $i|sed -e 's/\.trashinfo$//';`;
         i=$trash/info/$i;
-        if [ -e $f ];then
+        if [ -L $f ] || [ -e $f ];then
             t=`sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1\2/;s/-//g;s/\://gp' $i;`;
             if [ $deldate -gt $t ];then
                 rm=(${rm[@]} $i $f);
