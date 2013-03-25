@@ -68,6 +68,23 @@ Delete the files from N day before.
     2013-03-12 08:37:49 /home/emanon/test2.txt
     Delete these 2 files really? [y/n] y
 
+### trash-remove ###
+Delete the files that match the pattern.
+
+    $ trash-remove "*"
+    2013-03-26 04:46:59 /home/emanon/test1.txt
+    2013-03-26 04:46:59 /home/emanon/test2.txt
+    2013-03-26 04:46:59 /home/emanon/test3.txt
+    2013-03-26 04:46:59 /home/emanon/test4.txt
+    Delete these 4 files really? [y/n] y
+
+If more than one pattern
+
+    $ trash-remove "test3*" "test1*"
+    2013-03-26 04:46:59 /home/emanon/test1.txt
+    2013-03-26 04:46:59 /home/emanon/test3.txt
+    Delete these 2 files really? [y/n] y
+
 
 Warning
 ------
