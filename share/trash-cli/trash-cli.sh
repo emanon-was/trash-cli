@@ -157,7 +157,7 @@ trash-put ()
     _IFS="$IFS";IFS=$'\n';
     trash=~/.local/share/Trash;
     date=`\date +"%Y-%m-%dT%T";`;
-    files=`\abspath $@;`;
+    files=(`\abspath $@;`);
 
     # step2
     if [ ! -d $trash/files ];then \mkdir -p $trash/files;fi
