@@ -45,7 +45,7 @@ stdout=(`echo -en "${stdout[*]}"|sort|grep "^$insert$" -B 10000|sed "/^$/d;/^$in
 unset insert;
 
 # step3
-disp=(`echo -en "${stdout[*]}"|sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\1 \2\3/g;"`);
+disp=(`echo -en "${stdout[*]}"|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\1 \2\3/g;"`);
 num=${#disp[@]};
 if [ $num -ne 0 ];then echo -e "${disp[*]}";fi
 echo -n "Delete these $num files really? [y/n] ";
@@ -59,8 +59,8 @@ fi
 # step4
 rm=(-rf);
 for l in ${stdout[@]};do
-    f=`echo -en $l|sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\4/g;"`;
-    i=`echo -en $l|sed -e "s/^\(.*\)\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'\ \+'\(.*\)'$/\5/g;"`;
+    f=`echo -en $l|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\4/g;"`;
+    i=`echo -en $l|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\5/g;"`;
     if [ -L $f ] || [ -e $f ];then
         rm=(${rm[@]} $i $f);
     fi
