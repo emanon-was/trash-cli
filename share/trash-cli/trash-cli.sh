@@ -52,10 +52,15 @@ trash-empty ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset trash _IFS;
-        exit;
+        return 1;
     fi
     declare -i ago;ago=$1;
-    insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
+    declare insert;
+    if [ `uname` = "Linux" ];then
+        insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
+    elif [ `uname` = "Darwin" ];then
+        insert=`\date -v-"$ago"d +"%Y-%m-%d %T";`;
+    fi
     unset ago;
 
     # step2
@@ -87,7 +92,7 @@ trash-empty ()
     if [ "$ans" != 'y' ] && [ "$ans" != 'yes' ];then
         IFS="$_IFS";
         unset _IFS trash stdout disp num ans;
-        exit;
+        return 0;
     fi
 
     # step4
@@ -124,7 +129,7 @@ trash-list ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset _IFS trash;
-        exit;
+        return 1;
     fi
 
     # step2
@@ -213,7 +218,7 @@ trash-remove ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset trash _IFS;
-        return;
+        return 1;
     fi
 
     # step2
@@ -243,7 +248,7 @@ trash-remove ()
     if [ "$ans" != 'y' ] && [ "$ans" != 'yes' ];then
         IFS="$_IFS";
         unset _IFS trash stdout disp num ans;
-        return;
+        return 0;
     fi
 
     # step4
@@ -276,7 +281,7 @@ trash-restore ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset _IFS trash;
-        exit;
+        return 1;
     fi
 
     # step2

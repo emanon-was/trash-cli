@@ -14,7 +14,7 @@ trash-restore ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset _IFS trash;
-        exit;
+        return 1;
     fi
 
     # step2

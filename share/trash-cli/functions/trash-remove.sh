@@ -19,7 +19,7 @@ trash-remove ()
     if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
         IFS="$_IFS";
         unset trash _IFS;
-        return;
+        return 1;
     fi
 
     # step2
@@ -49,7 +49,7 @@ trash-remove ()
     if [ "$ans" != 'y' ] && [ "$ans" != 'yes' ];then
         IFS="$_IFS";
         unset _IFS trash stdout disp num ans;
-        return;
+        return 0;
     fi
 
     # step4

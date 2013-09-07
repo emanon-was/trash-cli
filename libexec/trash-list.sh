@@ -19,17 +19,17 @@ trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
     IFS="$_IFS";
     unset _IFS trash;
-    exit;
+    exit 1;
 fi
 
 # step2
 declare stdout;
-info=(`ls -a $trash/info|grep "\.trashinfo$"`);
+info=(`\ls -a $trash/info|\grep "\.trashinfo$"`);
 for i in ${info[@]};do
-    f=$trash/files/`echo -e $i|sed -e 's/\.trashinfo$//';`;
+    f=$trash/files/`\echo -e $i|\sed -e 's/\.trashinfo$//';`;
     i=$trash/info/$i;
-    d=`sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i`
-    p=`sed -n 's/Path=\(.*\)/\1/p' $i`
+    d=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i`
+    p=`\sed -n 's/Path=\(.*\)/\1/p' $i`
     declare s;
     if [ -d $f ];then s=/;fi
     if [ -L $f ];then s=@;fi
@@ -39,7 +39,6 @@ done
 unset info i d p;
 
 # step3
-decode_utf8 "${stdout[*]}" | sort $@;
+\decode_utf8 "${stdout[*]}" | \sort $@;
 IFS="$_IFS";
 unset _IFS trash stdout;
-

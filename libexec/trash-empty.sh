@@ -18,20 +18,25 @@ trash=~/.local/share/Trash;
 if [ ! -e $trash/files ] || [ ! -e $trash/info ];then
     IFS="$_IFS";
     unset trash _IFS;
-    exit;
+    exit 1;
 fi
 declare -i ago;ago=$1;
-insert=`date +"%Y-%m-%d %T" -d "$ago days ago";`;
+declare insert;
+if [ `uname` = "Linux" ];then
+    insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
+elif [ `uname` = "Darwin" ];then
+    insert=`\date -v-"$ago"d +"%Y-%m-%d %T";`;
+fi
 unset ago;
 
 # step2
 declare stdout;
-info=(`ls -a $trash/info|grep "\.trashinfo$"`);
+info=(`\ls -a $trash/info|\grep "\.trashinfo$"`);
 for i in ${info[@]};do
-    f=$trash/files/`echo -e $i|sed -e 's/\.trashinfo$//';`;
+    f=$trash/files/`\echo -e $i|\sed -e 's/\.trashinfo$//';`;
     i=$trash/info/$i;
-    d=`sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i;`;
-    p=`sed -n 's/Path=\(.*\)/\1/p' $i;`;
+    d=`\sed -n 's/DeletionDate=\(.*\)T\(.*\)/\1 \2/p' $i;`;
+    p=`\sed -n 's/Path=\(.*\)/\1/p' $i;`;
     declare s;
     if [ -d $f ];then s=/;fi
     if [ -L $f ];then s=@;fi
@@ -40,33 +45,32 @@ for i in ${info[@]};do
 done
 unset info d p i f;
 stdout=(${stdout[@]} "$insert");
-stdout=(`decode_utf8 "${stdout[*]}";`);
-stdout=(`echo -en "${stdout[*]}"|sort|grep "^$insert$" -B 10000|sed "/^$/d;/^$insert$/d;"`);
+stdout=(`\decode_utf8 "${stdout[*]}";`);
+stdout=(`\echo -en "${stdout[*]}"|\sort|\grep "^$insert$" -B 10000|\sed "/^$/d;/^$insert$/d;"`);
 unset insert;
 
 # step3
-disp=(`echo -en "${stdout[*]}"|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\1 \2\3/g;"`);
+disp=(`\echo -en "${stdout[*]}"|\sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\1 \2\3/g;"`);
 num=${#disp[@]};
-if [ $num -ne 0 ];then echo -e "${disp[*]}";fi
-echo -n "Delete these $num files really? [y/n] ";
+if [ $num -ne 0 ];then \echo -e "${disp[*]}";fi
+\echo -n "Delete these $num files really? [y/n] ";
 read ans;
 if [ "$ans" != 'y' ] && [ "$ans" != 'yes' ];then
     IFS="$_IFS";
     unset _IFS trash stdout disp num ans;
-    exit;
+    exit 0;
 fi
 
 # step4
 rm=(-rf);
 for l in ${stdout[@]};do
-    f=`echo -en $l|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\4/g;"`;
-    i=`echo -en $l|sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\5/g;"`;
+    f=`\echo -en $l|\sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\4/g;"`;
+    i=`\echo -en $l|\sed -e "s/^\(.*\)\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'\  *'\(.*\)'$/\5/g;"`;
     if [ -L $f ] || [ -e $f ];then
         rm=(${rm[@]} $i $f);
     fi
 done
 unset l f i;
-rm ${rm[@]};
+\rm ${rm[@]};
 IFS="$_IFS";
 unset _IFS trash stdout disp num ans rm;
-
