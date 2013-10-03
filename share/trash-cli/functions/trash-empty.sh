@@ -21,9 +21,9 @@ trash-empty ()
     fi
     declare -i ago;ago=$1;
     declare insert;
-    if [ `uname` = "Linux" ];then
+    if date --version > /dev/null 2>&1;then
         insert=`\date +"%Y-%m-%d %T" -d "$ago days ago";`;
-    elif [ `uname` = "Darwin" ];then
+    else
         insert=`\date -v-"$ago"d +"%Y-%m-%d %T";`;
     fi
     unset ago;
